@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+// 注意包名会被处理
+// '.' => '_': go_micro_srv_consignment
+// 注意引入的时候，一般取了个别名。import引入的是路径
+package go.micro.srv.consignment;
+
+// 货轮微服务
+// 定义了一个ShippingService，里面提供了接口。
+// 需要服务端实现相关 服务 => 注册：
+// - 此处的ShippingService会被编译出一个 RegisterShippingServiceServer 的注册方法。
+// - 调用 RegisterShippingServiceServer(grpc.NewServer(), &simpleServer{})
+// - simpleServer 只是一个struct，名字可以随便取，只要实现相关接口即可
+
+// 客户端要调用:
+// - 此处的ShippingService会被编译出一个 NewShippingServiceClient 的方法 返回一个 ShippingServiceClient 供调用。
+// - grpcClient := pb.NewShippingServiceClient(conn)
+// - resp, err := grpcClient.CreateConsignment(context.Background(), &Consignment{})
+
+service ShippingService {
+  // 托运一批货物接口
+  rpc CreateConsignment (Consignment) returns (Response) {};
+
+  // 查看托运货物的信息
+  rpc GetConsignments (GetRequest) returns (Response) {};
+}
+
+// 表示货轮承运的一批货物
+message Consignment {
+  string id = 1;                      // 货物编号
+  string description = 2;             // 货物描述
+  int32 weight = 3;                   // 货物重量
+  repeated Container containers = 4;  // 这批货有哪些集装箱(是个数组 => repeat)
+  string vessel_id = 5;               // 承运的货轮
+}
+
+// 单个集装箱
+message Container {
+  string id = 1;          // 集装箱编号
+  string customer_id = 2; // 集装箱所属客户的编号
+  string origin = 3;      // 出发地
+  string user_id = 4;     // 集装箱所属用户的编号
+}
+
+// 托运结果
+message Response {
+  bool created = 1;                       // 托运是否成功
+  Consignment consignment = 2;            // 新托运的货物信息
+  repeated Consignment consignments = 3;  // 目前所有托运的货物
+}
+
+// 查看货物信息的请求
+// 客户端想要从服务端请求数据，必须有请求格式，哪怕为空
+message GetRequest {}
